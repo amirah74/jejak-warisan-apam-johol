@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jejak Warisan Apam Johol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --sun: #fde047;
+            --cream: #fef3c7;
+            --bark-dark: #2b1607;
+            --bark: #4a2a10;
+        }
+        body {
+            font-family: 'Nunito', sans-serif;
+            color: var(--cream);
+            min-height: 100vh;
+            user-select: none;
+            overflow-x: hidden;
+            background:
+                radial-gradient(ellipse 80% 50% at 50% -5%, rgba(190, 242, 100, .35), transparent 70%),
+                linear-gradient(180deg, #166534 0%, #14532d 35%, #0b3d1e 70%, #052e16 100%);
+            background-attachment: fixed;
+        }
+        .font-heading { font-family: 'Fredoka', sans-serif; }
+        .title-text { color: var(--sun); text-shadow: 0 2px 0 #422006, 0 4px 10px rgba(0, 0, 0, .45); }
+        .ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; flex-shrink: 0; }
+
+        #jungle { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; transform-origin: 50% 45%; }
+        .rays {
+            position: absolute; left: 50%; top: -10%;
+            width: 200vmax; height: 200vmax; transform: translateX(-50%);
+            background: repeating-conic-gradient(from 150deg at 50% 0%, rgba(254, 249, 195, .08) 0deg 3deg, transparent 3deg 11deg);
+            -webkit-mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 45%);
+                    mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 45%);
+            animation: raysPulse 8s ease-in-out infinite;
+        }
+        @keyframes raysPulse { 50% { opacity: .45; } }
+        .trunk {
+            position: absolute; top: 0; bottom: 0;
+            width: clamp(14px, 4.5vw, 80px);
+            background:
+                radial-gradient(ellipse 35% 2.5% at 55% 38%, #1f0f04 40%, transparent 100%),
+                radial-gradient(ellipse 30% 2% at 40% 72%, #1f0f04 40%, transparent 100%),
+                radial-gradient(ellipse 60% 6% at 30% 55%, rgba(101, 163, 13, .55), transparent 70%),
+                radial-gradient(ellipse 50% 5% at 70% 20%, rgba(101, 163, 13, .45), transparent 70%),
+                linear-gradient(90deg, rgba(0, 0, 0, .5), transparent 30%, transparent 65%, rgba(0, 0, 0, .6)),
+                repeating-linear-gradient(90deg, #5b3a1a 0 7px, #46290f 7px 10px, #6b4423 10px 18px, #3a2210 18px 20px);
+            box-shadow: 0 0 35px rgba(0, 0, 0, .65);
+        }
+        .trunk.left { left: 0; }
+        .trunk.right { right: 0; }
+        .mist { position: absolute; left: 0; right: 0; bottom: 0; height: 35vh; background: linear-gradient(transparent, rgba(132, 204, 22, .12)); }
+        .leaf { position: absolute; transform-origin: 0 50%; }
+        .leaf .sway { transform-origin: 0 50%; animation: sway ease-in-out infinite alternate; }
+        .leaf svg { display: block; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .35)); }
+        @keyframes sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+        .vine { position: absolute; top: -6px; transform-origin: 50% 0; animation: swing ease-in-out infinite alternate; }
+        @keyframes swing { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+        .fall { position: absolute; top: -50px; animation: fall linear infinite; }
+        .fall > div { animation: flutter ease-in-out infinite alternate; }
+        @keyframes fall { to { transform: translateY(115vh) rotate(540deg); } }
+        @keyframes flutter { from { transform: translateX(-35px); } to { transform: translateX(35px); } }
+        .firefly {
+            position: absolute; width: 5px; height: 5px; border-radius: 50%;
+            background: #fef08a; box-shadow: 0 0 8px 3px rgba(254, 240, 138, .7);
+            animation-name: drift, blink;
+            animation-timing-function: ease-in-out, ease-in-out;
+            animation-iteration-count: infinite, infinite;
+            animation-direction: alternate, normal;
+        }
+        @keyframes drift { to { transform: translate(var(--dx), var(--dy)); } }
+        @keyframes blink { 0%, 100% { opacity: .1; } 50% { opacity: 1; } }
+
+        #stage { transform-origin: 50% 40%; }
+        #iris { position: fixed; inset: 0; z-index: 90; pointer-events: none; overflow: hidden; display: none; align-items: center; justify-content: center; }
+        #iris.show { display: flex; }
+        #iris-hole {
+            width: 0; height: 0; border-radius: 50%; flex-shrink: 0;
+            box-shadow: 0 0 0 300vmax #031a0b, inset 0 0 0 6px rgba(253, 224, 71, .8);
+        }
+        #round-banner { position: fixed; inset: 0; z-index: 85; pointer-events: none; display: none; align-items: center; justify-content: center; padding: 16px; }
+        #round-banner.show { display: flex; }
+
+        .wood {
+            position: relative;
+            background:
+                radial-gradient(circle at 13px 13px, #2b1607 2.5px, #c08a4d 3.2px, transparent 4.2px),
+                radial-gradient(circle at calc(100% - 13px) 13px, #2b1607 2.5px, #c08a4d 3.2px, transparent 4.2px),
+                radial-gradient(circle at 13px calc(100% - 13px), #2b1607 2.5px, #c08a4d 3.2px, transparent 4.2px),
+                radial-gradient(circle at calc(100% - 13px) calc(100% - 13px), #2b1607 2.5px, #c08a4d 3.2px, transparent 4.2px),
+                repeating-linear-gradient(178deg, transparent 0 14px, rgba(60, 30, 10, .18) 14px 16px, transparent 16px 30px),
+                linear-gradient(90deg, #8a5a2b, #a46b33 25%, #7e4f22 55%, #9c6530 80%, #85552a);
+            border: 4px solid var(--bark);
+            border-radius: 18px;
+            box-shadow: inset 0 2px 0 rgba(255, 220, 170, .25), inset 0 -5px 0 rgba(0, 0, 0, .25), 0 7px 0 var(--bark-dark), 0 14px 26px rgba(0, 0, 0, .45);
+        }
+        .wood.dark {
+            background:
+                repeating-linear-gradient(178deg, transparent 0 14px, rgba(20, 10, 2, .22) 14px 16px, transparent 16px 30px),
+                linear-gradient(90deg, #5a3818, #6b4320 30%, #4f3014 60%, #64401d);
+        }
+        .wood-inset { background: rgba(43, 22, 7, .65); border-radius: 12px; box-shadow: inset 0 3px 8px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 220, 170, .2); }
+        .wood-btn {
+            width: 42px; height: 42px; border-radius: 999px;
+            background: radial-gradient(circle at 35% 30%, #b77a3e, #7a4a1f 70%);
+            border: 3px solid var(--bark); box-shadow: 0 4px 0 var(--bark-dark);
+            color: var(--sun); display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .wood-btn:hover { transform: translateY(-2px) rotate(-8deg); }
+        .wood-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--bark-dark); }
+        .wood-btn.off { color: #a8a29e; opacity: .75; }
+        .ropes::before, .ropes::after {
+            content: ''; position: absolute; top: -44px; width: 6px; height: 48px; z-index: -1;
+            background: repeating-linear-gradient(160deg, #d6b47a 0 4px, #9c7a44 4px 7px);
+            border-radius: 3px;
+        }
+        .ropes::before { left: 14%; }
+        .ropes::after { right: 14%; }
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 10px;
+            font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+            border: 2px solid var(--bark-dark); box-shadow: 0 3px 0 var(--bark-dark);
+        }
+        .tag.sun { background: linear-gradient(#fde68a, #f59e0b); color: #422006; }
+        .tag.leafy { background: linear-gradient(#d9f99d, #65a30d); color: #1a2e05; }
+        .corner-leaf { position: absolute; pointer-events: none; transform-origin: 0 50%; z-index: 3; }
+
+        .journey-step {
+            width: 36px; height: 36px; border-radius: 999px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; position: relative;
+            background: radial-gradient(circle at 35% 30%, #c08a4d, #6b4320 75%);
+            border: 3px solid var(--bark-dark);
+            opacity: .55; filter: saturate(.3);
+            transition: all .3s;
+        }
+        .journey-step.current {
+            opacity: 1; filter: none; border-color: var(--sun);
+            box-shadow: 0 0 0 4px rgba(253, 224, 71, .25), 0 0 18px rgba(253, 224, 71, .6);
+            animation: bob 1.6s ease-in-out infinite;
+        }
+        .journey-step.done { opacity: 1; filter: none; border-color: #84cc16; }
+        .journey-step.done::after {
+            content: '✓'; position: absolute; right: -6px; bottom: -6px;
+            width: 17px; height: 17px; border-radius: 999px;
+            background: #65a30d; color: #fff; font-size: 10px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center; border: 2px solid var(--bark-dark);
+        }
+        .journey-line { width: 12px; height: 4px; border-radius: 3px; background: repeating-linear-gradient(90deg, #d6b47a 0 3px, #9c7a44 3px 6px); }
+        @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        .mini-piece { color: rgba(254, 243, 199, .2); font-size: 18px; transition: all .5s cubic-bezier(.34, 1.56, .64, 1); }
+        .mini-piece.got { color: var(--sun); transform: scale(1.2) rotate(-10deg); filter: drop-shadow(0 0 6px rgba(253, 224, 71, .8)); }
+
+        .card { position: relative; perspective: 1000px; cursor: pointer; transition: transform .25s ease, opacity .4s ease; }
+        .card:not(.dealt) { opacity: 0; pointer-events: none; }
+        .card.dealt { animation: dealIn .55s cubic-bezier(.34, 1.56, .64, 1) backwards; }
+        .card.dealt:not(.flipped):not(.matched-done):hover { transform: translateY(-5px) rotate(-2deg); }
+        @keyframes dealIn { from { opacity: 0; transform: translateY(-60px) scale(.4) rotate(-20deg); } }
+
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform .6s cubic-bezier(.4, 0, .2, 1); transform-style: preserve-3d; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute; inset: 0;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            border: 3px solid;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, .3), 0 12px 18px rgba(0, 0, 0, .3);
+        }
+        .card-front { transform: rotateY(180deg); }
+        .q-card .card-face, .q-shape { border-radius: 16px; }
+        .a-card .card-face, .a-shape { border-radius: 30px 6px 30px 6px; }
+        .face-icon { font-size: 30px; }
+
+        .back-q {
+            background:
+                radial-gradient(ellipse 22% 12% at 76% 26%, rgba(146, 64, 14, .5) 35%, transparent 75%),
+                radial-gradient(ellipse 14% 8% at 22% 78%, rgba(146, 64, 14, .4) 35%, transparent 75%),
+                linear-gradient(180deg, rgba(255, 255, 255, .35), transparent 45%, rgba(124, 45, 18, .25)),
+                repeating-linear-gradient(90deg, #fcd34d 0 6px, #f59e0b 6px 8px, #fde68a 8px 15px, #f2a20f 15px 17px);
+            border-color: #7c2d12; color: #7c2d12;
+        }
+        .back-q .face-icon { filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .6)); }
+        .back-a {
+            background:
+                linear-gradient(135deg, transparent 48.6%, rgba(236, 252, 203, .55) 49.3% 50.7%, transparent 51.4%),
+                repeating-linear-gradient(45deg, transparent 0 13px, rgba(236, 252, 203, .16) 13px 14.5px),
+                linear-gradient(135deg, #84cc16, #4d7c0f 55%, #365314);
+            border-color: #1a2e05; color: #ecfccb;
+        }
+        .back-a .face-icon { filter: drop-shadow(0 2px 0 #1a2e05); }
+
+        .front-q { background: linear-gradient(135deg, #ffffff, #fef3c7); color: #78350f; border-color: #b45309; }
+        .front-a {
+            background:
+                linear-gradient(135deg, transparent 48.6%, rgba(77, 124, 15, .18) 49.3% 50.7%, transparent 51.4%),
+                linear-gradient(135deg, #f7fee7, #bef264);
+            color: #365314; border-color: #4d7c0f;
+        }
+
+        .card.selected .card-front { box-shadow: 0 0 0 4px var(--sun), 0 0 24px rgba(253, 224, 71, .8); }
+        .card.matched-done { cursor: default; opacity: .45; transform: scale(.93); }
+        .card.matched-done .card-front { filter: saturate(.4); box-shadow: none; }
+        .done-badge {
+            position: absolute; top: -8px; right: -8px; z-index: 5;
+            width: 26px; height: 26px; border-radius: 999px;
+            background: #65a30d; color: #fff; border: 2px solid #fef3c7;
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
+            animation: badgePop .5s cubic-bezier(.34, 1.56, .64, 1);
+        }
+        @keyframes badgePop { from { transform: scale(0); } }
+        @keyframes shake {
+            0%, 100% { transform: rotateY(180deg) translateX(0); }
+            20%, 60% { transform: rotateY(180deg) translateX(-8px); }
+            40%, 80% { transform: rotateY(180deg) translateX(8px); }
+        }
+        .card-shake .card-inner { animation: shake .5s ease-in-out; }
+        .card-shake .card-front { box-shadow: 0 0 0 4px #f97316, 0 0 20px rgba(249, 115, 22, .7) !important; }
+
+        .merge-clone {
+            position: fixed; z-index: 60; pointer-events: none;
+            border: 3px solid var(--sun); display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 0 30px rgba(253, 224, 71, .9); will-change: transform;
+        }
+        .ring-burst {
+            position: fixed; z-index: 59; pointer-events: none; border-radius: 999px; border: 6px solid #fef08a;
+            transform: translate(-50%, -50%); animation: ringBurst .7s ease-out forwards;
+        }
+        @keyframes ringBurst { 0% { width: 20px; height: 20px; opacity: 1; } 100% { width: 280px; height: 280px; opacity: 0; border-width: 1px; } }
+        .flash-dot {
+            position: fixed; z-index: 59; pointer-events: none; width: 140px; height: 140px; border-radius: 999px;
+            background: radial-gradient(circle, #fff 0%, rgba(217, 249, 157, .8) 35%, transparent 70%);
+            transform: translate(-50%, -50%) scale(.2); animation: flash .5s ease-out forwards;
+        }
+        @keyframes flash { 50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; } }
+        .flying-piece {
+            position: fixed; z-index: 60; pointer-events: none;
+            filter: drop-shadow(0 0 14px rgba(253, 224, 71, .9)) drop-shadow(0 8px 10px rgba(0, 0, 0, .45)); will-change: transform;
+        }
+        .flying-piece svg { width: 100%; height: 100%; overflow: visible; display: block; }
+
+        .board-overlay {
+            position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 16px;
+            background: rgba(5, 30, 12, .65); backdrop-filter: blur(4px); opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, visibility .35s ease;
+        }
+        .board-overlay.show { opacity: 1; visibility: visible; }
+        .board-card { width: min(92vw, 480px); transform: scale(.7) translateY(40px); transition: transform .45s cubic-bezier(.34, 1.56, .64, 1); }
+        .board-overlay.show .board-card { transform: none; }
+        .board-wrap { position: relative; width: 100%; aspect-ratio: 412 / 312; }
+        .board-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+        .slot-ghost { fill: rgba(254, 243, 199, .04); stroke: rgba(254, 243, 199, .55); stroke-width: 2; stroke-dasharray: 7 6; animation: dashMove 1.2s linear infinite; transition: all .3s; }
+        .slot-ghost.target { fill: rgba(253, 224, 71, .2); stroke: var(--sun); stroke-width: 3.5; animation: dashMove .5s linear infinite; }
+        @keyframes dashMove { to { stroke-dashoffset: -26; } }
+        .slot-num { fill: rgba(254, 243, 199, .35); font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 30px; text-anchor: middle; dominant-baseline: central; transition: opacity .3s; }
+        .piece-outline { fill: none; stroke: rgba(254, 243, 199, .9); stroke-width: 2; transition: opacity .8s; }
+        .placed-piece.snap { transform-box: fill-box; transform-origin: center; animation: snapIn .6s cubic-bezier(.34, 1.56, .64, 1); }
+        @keyframes snapIn { 0% { transform: scale(1.2); filter: brightness(2); } 100% { transform: scale(1); filter: brightness(1); } }
+        #slot-layer { transition: opacity .8s; }
+        .full-img { opacity: 0; transition: opacity 1s ease; }
+        .board-wrap.complete .full-img { opacity: 1; }
+        .board-wrap.complete .piece-outline, .board-wrap.complete #slot-layer { opacity: 0; }
+        .board-shine { position: absolute; inset: 0; border-radius: 14px; pointer-events: none; overflow: hidden; }
+        .board-shine::before {
+            content: ''; position: absolute; top: -20%; bottom: -20%; left: -50%; width: 35%;
+            background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .6), transparent); transform: skewX(-15deg); opacity: 0;
+        }
+        .board-wrap.complete .board-shine::before { animation: shine 1.2s .6s ease-in-out forwards; }
+        @keyframes shine { 0% { left: -50%; opacity: 1; } 100% { left: 120%; opacity: 1; } }
+
+        #toast-box { position: fixed; top: 16%; left: 50%; transform: translateX(-50%); z-index: 70; pointer-events: none; }
+        .toast {
+            font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 2rem; padding: .35rem 1.4rem; border-radius: 30px 8px 30px 8px; white-space: nowrap;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, .3), 0 12px 25px rgba(0, 0, 0, .35); animation: toastPop 1.3s cubic-bezier(.34, 1.56, .64, 1) forwards;
+        }
+        .toast.good { background: linear-gradient(#d9f99d, #65a30d); color: #1a2e05; border: 3px solid #fef08a; }
+        .toast.bad { background: linear-gradient(#fdba74, #ea580c); color: #fff; border: 3px solid #7c2d12; font-size: 1.4rem; text-shadow: 0 2px 0 #7c2d12; }
+        @keyframes toastPop {
+            0% { opacity: 0; transform: scale(.3) translateY(20px); }
+            20% { opacity: 1; transform: scale(1.1); }
+            35% { transform: scale(1); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+        #sound-hint { position: fixed; bottom: 14px; right: 14px; z-index: 30; animation: bob 2s ease-in-out infinite; transition: opacity .5s; }
+        .star { font-size: 2.4rem; color: rgba(43, 22, 7, .45); margin: 0 .2rem; display: inline-block; }
+        .star.on { color: var(--sun); filter: drop-shadow(0 0 10px rgba(253, 224, 71, .8)) drop-shadow(0 3px 0 #422006); animation: starPop .5s cubic-bezier(.34, 1.56, .64, 1) backwards; }
+        @keyframes starPop { from { transform: scale(0) rotate(-90deg); } }
+
+        #finale {
+            position: fixed; inset: 0; z-index: 88; display: none; overflow-y: auto;
+            background: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(253, 224, 71, .28), transparent 70%), rgba(3, 26, 11, .88);
+            backdrop-filter: blur(6px); padding: 28px 16px 40px;
+        }
+        #finale.show { display: block; animation: fadeIn .6s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; } }
+        .finale-rays {
+            position: fixed; left: 50%; top: 18%; width: 160vmax; height: 160vmax; transform: translate(-50%, -50%); pointer-events: none; z-index: -1;
+            background: repeating-conic-gradient(rgba(253, 224, 71, .09) 0deg 8deg, transparent 8deg 20deg);
+            -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 55%); mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+            animation: spinRays 30s linear infinite;
+        }
+        @keyframes spinRays { to { transform: translate(-50%, -50%) rotate(360deg); } }
+        .trophy { font-size: 84px; display: inline-block; animation: trophyIn 1s cubic-bezier(.34, 1.56, .64, 1) backwards, bob 2.2s 1s ease-in-out infinite; filter: drop-shadow(0 8px 18px rgba(253, 224, 71, .6)); }
+        @keyframes trophyIn { from { transform: scale(0) rotate(-200deg); } }
+        .finale-title { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: clamp(2.6rem, 8vw, 4.6rem); line-height: 1; color: var(--sun); text-shadow: 0 4px 0 #422006, 0 8px 0 rgba(0, 0, 0, .25), 0 0 30px rgba(253, 224, 71, .5); }
+        .pop-in { animation: popIn .7s cubic-bezier(.34, 1.56, .64, 1) backwards; }
+        @keyframes popIn { from { opacity: 0; transform: scale(.4) translateY(30px); } }
+        .photo {
+            position: relative; background: #fffbeb; padding: 10px 10px 14px; border-radius: 6px; box-shadow: 0 10px 0 rgba(0, 0, 0, .25), 0 18px 30px rgba(0, 0, 0, .45);
+            transform: rotate(var(--rot)); transition: transform .3s cubic-bezier(.34, 1.56, .64, 1); animation: photoIn .8s cubic-bezier(.34, 1.56, .64, 1) backwards;
+        }
+        .photo:hover { transform: rotate(0deg) scale(1.06); z-index: 2; }
+        @keyframes photoIn { from { opacity: 0; transform: translateY(-80vh) rotate(-30deg) scale(.6); } }
+        .photo::before {
+            content: ''; position: absolute; top: -12px; left: 50%; width: 70px; height: 24px; transform: translateX(-50%) rotate(-3deg);
+            background: linear-gradient(rgba(190, 242, 100, .85), rgba(132, 204, 22, .85)); border-radius: 3px; box-shadow: 0 2px 4px rgba(0, 0, 0, .25);
+        }
+        .photo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 3px; display: block; }
+        .photo .stars-mini { color: #f59e0b; font-size: 15px; letter-spacing: 2px; }
+        .photo .stars-mini .off { color: #e7e5e4; }
+    </style>
+</head>
+<body class="px-5 sm:px-12 lg:px-24 pt-12 pb-6 flex flex-col min-h-screen">
+
+    <div id="jungle"></div>
+
+    <div id="stage" class="relative z-10 flex flex-col flex-1">
+        <header class="relative z-10 max-w-5xl mx-auto w-full mb-5">
+            <div class="wood ropes p-3 sm:p-4 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center gap-3 pl-2">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl text-lime-100 rotate-[-8deg] border-[3px] border-[#1a2e05]"
+                         style="background:linear-gradient(135deg,#84cc16,#3f6212);box-shadow:0 4px 0 #1a2e05" data-ic="leaf"></div>
+                    <div>
+                        <!-- Updated title and description for Apam Johol theme -->
+                        <h1 class="text-xl sm:text-2xl font-bold font-heading title-text tracking-wide">Jejak Warisan Apam Johol</h1>
+                        <p class="text-xs sm:text-sm text-amber-100/90 font-bold">Padankan fakta & terokai keunikan warisan!</p>
+                    </div>
+                </div>
+
+                <div id="journey" class="flex items-center gap-1 order-3 lg:order-none w-full lg:w-auto justify-center"></div>
+
+                <div class="flex items-center gap-2 pr-2">
+                    <div class="wood-inset flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2">
+                        <div class="text-center">
+                            <span class="text-[10px] text-amber-200/70 block uppercase font-bold">Pusingan</span>
+                            <span id="round-indicator" class="font-bold text-yellow-300 text-base sm:text-lg">1 / 5</span>
+                        </div>
+                        <div class="h-8 w-px bg-amber-900"></div>
+                        <div class="text-center">
+                            <span class="text-[10px] text-amber-200/70 block uppercase font-bold">Cubaan</span>
+                            <span id="moves-counter" class="font-bold text-lime-300 text-base sm:text-lg">0</span>
+                        </div>
+                        <div class="h-8 w-px bg-amber-900"></div>
+                        <div class="text-center">
+                            <span class="text-[10px] text-amber-200/70 block uppercase font-bold">Masa</span>
+                            <span id="timer-display" class="font-bold text-orange-300 text-base sm:text-lg">00:00</span>
+                        </div>
+                    </div>
+                    <button id="forest-btn" class="wood-btn" title="Bunyi hutan" data-ic="tree"></button>
+                    <button id="sound-btn" class="wood-btn" title="Kesan bunyi" data-ic="volume"></button>
+                    <button id="restart-btn" class="wood-btn" title="Mula semula pusingan" data-ic="restart"></button>
+                </div>
+            </div>
+        </header>
+
+        <main class="relative z-10 max-w-5xl mx-auto w-full flex-1 flex flex-col gap-4">
+            <div class="wood dark px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <span id="landmark-emoji" class="text-3xl drop-shadow">🍃</span>
+                    <div>
+                        <!-- Updated label to fit the heritage trail theme -->
+                        <div class="text-[10px] uppercase text-amber-200/70 font-extrabold tracking-wider">Stesen Warisan</div>
+                        <div id="landmark-title" class="font-heading text-lg sm:text-xl title-text font-bold leading-tight">Misi</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="target-sifir-badge" class="tag sun">Fakta</span>
+                    <div id="mini-progress" class="flex items-center gap-1.5 wood-inset px-2.5 py-1.5" title="Cebisan puzzle terkumpul"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 sm:gap-5">
+                <div class="wood p-2.5 sm:p-4 flex flex-col gap-2.5">
+                    <div class="flex justify-center"><span class="tag sun"><span data-ic="question"></span> Kad Soalan</span></div>
+                    <div id="questions-grid" class="wood-inset p-2 sm:p-3 grid grid-cols-2 gap-2.5 sm:gap-3"></div>
+                </div>
+                <div class="wood p-2.5 sm:p-4 flex flex-col gap-2.5">
+                    <div class="flex justify-center"><span class="tag leafy"><span data-ic="leaf"></span> Kad Jawapan</span></div>
+                    <div id="answers-grid" class="wood-inset p-2 sm:p-3 grid grid-cols-2 gap-2.5 sm:gap-3"></div>
+                </div>
+            </div>
+
+            <div class="min-h-[52px] flex items-center justify-center pb-2">
+                <p id="play-hint" class="text-center text-xs sm:text-sm text-lime-100/85 font-bold drop-shadow">
+                    👆 Buka 1 kad soalan dan 1 kad jawapan yang sepadan untuk membentuk cebisan puzzle!
+                </p>
+                <div id="preview-bar" class="hidden w-full max-w-xl wood dark px-4 py-2 flex items-center gap-3">
+                    <span class="text-xl">👀</span>
+                    <span class="font-heading font-bold title-text text-sm sm:text-base whitespace-nowrap">Ingat kedudukan kad!</span>
+                    <div class="flex-1 h-3 wood-inset overflow-hidden rounded-full">
+                        <div id="preview-fill" class="h-full rounded-full" style="background:linear-gradient(90deg,#a3e635,#fde047);width:100%"></div>
+                    </div>
+                    <span id="preview-sec" class="font-heading font-bold text-yellow-300 text-lg w-5 text-right">2</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="board-overlay" class="board-overlay">
+        <div id="board-card" class="board-card wood p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3 px-2">
+                <h2 id="board-title" class="font-heading text-lg sm:text-xl title-text font-bold flex items-center gap-2"></h2>
+                <span id="board-count" class="tag leafy">0 / 6</span>
+            </div>
+            <div id="board-wrap" class="board-wrap">
+                <svg id="board-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+                <div class="board-shine"></div>
+            </div>
+            <p id="board-info" class="hidden mt-3 text-sm text-amber-50 wood-inset p-3 leading-relaxed font-bold"></p>
+        </div>
+    </div>
+
+    <div id="round-banner">
+        <div id="banner-move">
+            <div class="wood ropes px-8 sm:px-12 py-5 text-center">
+                <div class="text-xs uppercase font-extrabold text-amber-100/85 tracking-[.3em]">Pusingan <span id="banner-round">1</span></div>
+                <div id="banner-emoji" class="text-5xl sm:text-6xl my-2">🍃</div>
+                <div id="banner-name" class="font-heading text-2xl sm:text-4xl title-text font-bold"></div>
+                <div class="mt-3"><span id="banner-sifir" class="tag sun text-sm"></span></div>
+            </div>
+        </div>
+    </div>
+    <div id="iris"><div id="iris-hole"></div></div>
+
+    <div id="toast-box"></div>
+
+    <div id="finale">
+        <div class="finale-rays"></div>
+        <div class="max-w-5xl mx-auto text-center">
+            <div class="trophy">🏆</div>
+            <h2 class="finale-title pop-in" style="animation-delay:.3s">Syabas!</h2>
+            <!-- Updated finale message to match theme -->
+            <h3 class="font-heading font-bold text-2xl sm:text-4xl text-lime-200 mt-2 pop-in" style="animation-delay:.55s;text-shadow:0 3px 0 #1a2e05">Tahniah, Duta Warisan Johol!</h3>
+            <p class="text-amber-50 font-bold text-sm sm:text-base mt-3 pop-in" style="animation-delay:.75s">
+                Anda telah melengkapkan kesemua 5 stesen Jejak Warisan Apam Johol 🍃
+            </p>
+
+            <div class="wood inline-flex flex-wrap justify-center gap-3 sm:gap-6 px-6 py-3 mt-5 pop-in" style="animation-delay:.95s">
+                <div><span class="text-[10px] uppercase font-bold text-amber-200/80 block">Jumlah Bintang</span><span id="fin-stars" class="font-heading font-bold text-2xl text-yellow-300"></span></div>
+                <div class="w-px bg-amber-900 hidden sm:block"></div>
+                <div><span class="text-[10px] uppercase font-bold text-amber-200/80 block">Jumlah Cubaan</span><span id="fin-moves" class="font-heading font-bold text-2xl text-lime-300"></span></div>
+                <div class="w-px bg-amber-900 hidden sm:block"></div>
+                <div><span class="text-[10px] uppercase font-bold text-amber-200/80 block">Jumlah Masa</span><span id="fin-time" class="font-heading font-bold text-2xl text-orange-300"></span></div>
+            </div>
+
+            <div class="mt-10 mb-4 pop-in" style="animation-delay:1.1s">
+                <span class="tag leafy text-sm">📸 Galeri Jejak Saya</span>
+            </div>
+            <div id="fin-gallery" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 sm:gap-6 px-1 pt-4"></div>
+        </div>
+    </div>
+
+    <div id="sound-hint" class="wood px-4 py-2 text-xs sm:text-sm font-bold text-amber-50 whitespace-nowrap">
+        🌿 Ketik di mana-mana untuk dengar bunyi hutan
+    </div>
+
+    <div id="victory-modal" class="fixed inset-0 flex items-center justify-center p-4 z-[80] hidden opacity-0 transition-opacity duration-300" style="background:rgba(5,30,12,.8);backdrop-filter:blur(6px)">
+        <div id="modal-panel" class="wood p-6 sm:p-7 max-w-md w-full text-center transform scale-90 transition-transform duration-300 max-h-[95vh] overflow-y-auto">
+            <h2 id="modal-title" class="text-2xl sm:text-3xl font-bold font-heading title-text mb-1">Syabas! Pusingan Selesai!</h2>
+            <p id="modal-subtitle" class="text-sm text-amber-50 font-bold mb-3"></p>
+            <div id="modal-stars" class="mb-4"></div>
+            <div class="mb-4 rounded-xl overflow-hidden aspect-[4/3] border-4 border-[#2b1607] shadow-lg">
+                <img id="modal-landmark-img" src="" alt="Stesen Warisan" class="w-full h-full object-cover">
+            </div>
+            <p id="modal-info" class="text-xs sm:text-sm text-amber-50 font-bold mb-4 leading-relaxed"></p>
+            <div class="grid grid-cols-2 gap-3 wood-inset p-3 mb-5 text-left text-xs sm:text-sm">
+                <div><span class="text-amber-200/70 block font-bold">Jumlah Cubaan:</span><span id="modal-moves" class="font-bold text-yellow-300 text-base">0</span></div>
+                <div><span class="text-amber-200/70 block font-bold">Masa Digunakan:</span><span id="modal-time" class="font-bold text-lime-300 text-base">00:00</span></div>
+            </div>
+            <button id="next-round-btn" class="w-full py-3 px-6 rounded-2xl font-bold font-heading text-lg flex items-center justify-center gap-2 transition-transform hover:-translate-y-0.5 active:translate-y-0.5 border-[3px] border-[#1a2e05]"
+                    style="background:linear-gradient(#bef264,#65a30d);color:#1a2e05;box-shadow:0 5px 0 #1a2e05"></button>
+        </div>
+    </div>
+
+    <script>
+        const ICONS = {
+            leaf: '<path d="M20 3C10 3 4 8.5 4 15.5c0 1.6.3 3 .9 4.3 1.2-4.2 4.3-7.8 9.3-10-4.1 2.8-6.8 6.2-8 10.2 1.3.6 2.6.9 4.1.9C17.4 20.9 20.3 13.6 20 3z" fill="currentColor"/>',
+            tree: '<path d="M12 1.5l5 6.2h-2.4l4 5.2h-2.9l4 5.3H4.3l4-5.3H5.4l4-5.2H7z" fill="currentColor"/><rect x="10.4" y="17.8" width="3.2" height="4.7" rx="1" fill="currentColor"/>',
+            volume: '<path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.3 5.8a9 9 0 0 1 0 12.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+            mute: '<path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M15.5 9l5.5 6M21 9l-5.5 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+            restart: '<path d="M20 12a8 8 0 1 1-2.35-5.65" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M20.5 3.5v5.2h-5.2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>',
+            question: '<circle cx="12" cy="12" r="9.8" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M9.1 9.3a2.95 2.95 0 1 1 4.3 2.6c-.95.5-1.4 1.1-1.4 2.2v.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17.6" r="1.45" fill="currentColor"/>',
+            puzzle: '<path d="M10 3.2a2 2 0 0 1 4 0V5h3.8A1.2 1.2 0 0 1 19 6.2V10h-1.8a2 2 0 0 0 0 4H19v3.8a1.2 1.2 0 0 1-1.2 1.2H14v-1.8a2 2 0 0 0-4 0V19H6.2A1.2 1.2 0 0 1 5 17.8V14h1.8a2 2 0 0 0 0-4H5V6.2A1.2 1.2 0 0 1 6.2 5H10z" fill="currentColor"/>',
+            check: '<path d="M4.5 12.5l4.8 4.8L19.5 7" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>',
+            star: '<path d="M12 2.3l2.95 6.1 6.7.85-4.95 4.6 1.3 6.65L12 17.2l-6 3.3 1.3-6.65-4.95-4.6 6.7-.85z" fill="currentColor"/>',
+            arrow: '<path d="M4 12h15M13.5 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'
+        };
+        const ic = (name, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
+        document.querySelectorAll('[data-ic]').forEach(el => el.innerHTML = ic(el.dataset.ic));
+
+        const LANDMARKS = [
+            {
+                id: 1, name: "Dusun Daun Rambai", emoji: "🍃", colors: ["#86efac", "#4d7c0f"],
+                sifirTitle: "Bahan Balutan",
+                info: "Daun Rambai sangat penting kerana ia memberi aroma wangi yang unik dan bentuk bujur kepada Apam Johol apabila dikukus.",
+                imageUrl: "https://ms.wikipedia.org/wiki/Special:FilePath/APAM_JOHOL.jpg",
+                trivia: [
+                    {q: "Daun pembungkus Apam?", a: "Daun Rambai"},
+                    {q: "Fungsi utama daun?", a: "Aroma wangi"},
+                    {q: "Habitat pokok rambai?", a: "Kawasan dusun"},
+                    {q: "Bentuk bungkusan?", a: "Bujur panjang"},
+                    {q: "Kelebihan daun ini?", a: "Tahan wap panas"},
+                    {q: "Cara lipatan?", a: "Lipatan kemas & diikat"}
+                ]
+            },
+            {
+                id: 2, name: "Pondok Gula Enau", emoji: "🍯", colors: ["#fcd34d", "#fb923c"],
+                sifirTitle: "Pemanis Asli",
+                info: "Gula Enau (atau Gula Kabung) memberikan rasa manis lemak yang sangat istimewa dan warna keperangan pada Apam Johol.",
+                imageUrl: "https://ms.wikipedia.org/wiki/Special:FilePath/APAM_JOHOL.jpg",
+                trivia: [
+                    {q: "Pemanis utama Apam?", a: "Gula Enau"},
+                    {q: "Sumber Gula Enau?", a: "Nira Pokok Kabung"},
+                    {q: "Warna Gula Enau?", a: "Coklat keperangan"},
+                    {q: "Rasa Gula Enau?", a: "Manis lemak"},
+                    {q: "Bentuk asal dijual?", a: "Bongkah bulat"},
+                    {q: "Proses pembuatan?", a: "Dimasak berjam-jam"}
+                ]
+            },
+            {
+                id: 3, name: "Stesen Adunan Mulus", emoji: "🥣", colors: ["#fde68a", "#d97706"],
+                sifirTitle: "Bahan Asas",
+                info: "Tepung gandum dan ragi dicampur dengan mahir untuk menghasilkan tekstur Apam Johol yang kembang, lembut dan gebu.",
+                imageUrl: "https://ms.wikipedia.org/wiki/Special:FilePath/APAM_JOHOL.jpg",
+                trivia: [
+                    {q: "Tepung yang digunakan?", a: "Tepung Gandum"},
+                    {q: "Bahan pengembang?", a: "Ragi basah/kering"},
+                    {q: "Tekstur idaman Apam?", a: "Gebu dan lembut"},
+                    {q: "Cara adunan?", a: "Digaul rata"},
+                    {q: "Masa perapan?", a: "Dibiarkan kembang"},
+                    {q: "Hasil perapan?", a: "Adunan bersarang"}
+                ]
+            },
+            {
+                id: 4, name: "Seni Membungkus", emoji: "🤲", colors: ["#86efac", "#059669"],
+                sifirTitle: "Kemahiran Warisan",
+                info: "Proses membungkus memerlukan kepakaran. Sukatan adunan mesti tepat agar Apam tidak melimpah apabila mengembang.",
+                imageUrl: "https://ms.wikipedia.org/wiki/Special:FilePath/APAM_JOHOL.jpg",
+                trivia: [
+                    {q: "Berapa sudu adunan?", a: "Sukatan tepat (1-2 sudu)"},
+                    {q: "Posisi daun?", a: "Dibersihkan & dilentur"},
+                    {q: "Kenapa tak isi penuh?", a: "Beri ruang kembang"},
+                    {q: "Hujung daun diapakan?", a: "Dilipat kemas"},
+                    {q: "Cara susun apam?", a: "Tegak atau condong"},
+                    {q: "Siapa yang pakar?", a: "Orang lama Johol"}
+                ]
+            },
+            {
+                id: 5, name: "Dapur Kukus Tradisi", emoji: "🔥", colors: ["#fdba74", "#ea580c"],
+                sifirTitle: "Proses Memasak",
+                info: "Dikukus menggunakan wap panas. Aroma daun rambai dan gula enau akan menyelubungi ruang dapur, menandakan Apam sudah masak!",
+                imageUrl: "https://ms.wikipedia.org/wiki/Special:FilePath/APAM_JOHOL.jpg",
+                trivia: [
+                    {q: "Kaedah memasak?", a: "Kukus (wap panas)"},
+                    {q: "Tempoh mengukus?", a: "Sekitar 20-30 minit"},
+                    {q: "Tanda apam dah masak?", a: "Wangi daun naik"},
+                    {q: "Keadaan selepas masak?", a: "Kembang padat"},
+                    {q: "Sesuai dimakan waktu?", a: "Sarapan & petang"},
+                    {q: "Pasangan minuman?", a: "Kopi 'O' panas"}
+                ]
+            }
+        ];
+
+        const PRAISE = ["Hebat! 🌟", "Bijak! 🦜", "Syabas! 🎉", "Betul! 🍃", "Terbaik! 🐒", "Pandai! 🌺"];
+        const CONFETTI_COLORS = ['#a3e635', '#84cc16', '#fde047', '#fb923c', '#f87171', '#fef3c7'];
+
+        class SoundFX {
+            constructor() { this.ctx = null; this.enabled = true; }
+            init() {
+                if (!this.ctx) {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    if (!AC) return false;
+                    this.ctx = new AC();
+                }
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                return true;
+            }
+            tone(freq, type, dur, delay = 0, toFreq = null, vol = 0.15) {
+                if (!this.enabled || !this.init()) return;
+                setTimeout(() => {
+                    try {
+                        const t = this.ctx.currentTime;
+                        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+                        o.type = type;
+                        o.frequency.setValueAtTime(freq, t);
+                        if (toFreq) o.frequency.exponentialRampToValueAtTime(toFreq, t + dur);
+                        g.gain.setValueAtTime(vol, t);
+                        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+                        o.connect(g); g.connect(this.ctx.destination);
+                        o.start(t); o.stop(t + dur + 0.02);
+                    } catch (e) {}
+                }, delay);
+            }
+            marimba(freq, delay = 0, dur = 0.5, vol = 0.18) {
+                this.tone(freq, 'sine', dur, delay, null, vol);
+                this.tone(freq * 4, 'sine', dur * 0.2, delay, null, vol * 0.2);
+            }
+            flip()    { this.tone(260, 'triangle', 0.08, 0, 140, 0.25); this.tone(720, 'sine', 0.04, 0, null, 0.05); }
+            tick(d)   { this.tone(520, 'triangle', 0.05, d, 300, 0.12); }
+            match()   { [523.25, 659.25, 783.99].forEach((f, i) => this.marimba(f, i * 110)); }
+            wrong()   { this.tone(160, 'triangle', 0.18, 0, 90, 0.25); this.tone(120, 'triangle', 0.25, 160, 70, 0.25); }
+            spin()    { this.tone(300, 'sine', 0.95, 0, 1300, 0.06); }
+            pop()     { this.marimba(1046.5, 0, 0.4); this.marimba(1568, 90, 0.4, 0.12); }
+            whoosh()  { this.tone(900, 'sine', 0.55, 0, 220, 0.06); }
+            snap()    { this.tone(900, 'triangle', 0.06, 0, 500, 0.25); this.marimba(1318.5, 60, 0.4, 0.14); }
+            zoom()    { this.tone(180, 'sine', 1.1, 0, 900, 0.08); [392, 523.25, 659.25, 783.99].forEach((f, i) => this.marimba(f, 700 + i * 90, 0.45, 0.13)); }
+            thud()    { this.tone(140, 'triangle', 0.25, 0, 60, 0.3); }
+            reveal()  { [659.25, 783.99, 1046.5].forEach((f, i) => this.marimba(f, i * 70, 0.3, 0.1)); }
+            victory() {
+                [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => this.marimba(f, i * 130, 0.6));
+                [0, 1, 2, 3].forEach(i => this.tone(2800, 'sine', 0.08, 800 + i * 110, 3800, 0.06));
+            }
+        }
+        const soundFX = new SoundFX();
+
+        class JungleAmbience {
+            constructor(sfx) { this.sfx = sfx; this.on = true; this.running = false; this.timers = []; this.srcs = []; }
+            get ctx() { return this.sfx.ctx; }
+            start() {
+                if (!this.on || this.running || !this.sfx.init()) return;
+                this.running = true;
+                const ctx = this.ctx;
+                this.master = ctx.createGain();
+                this.master.gain.setValueAtTime(0.0001, ctx.currentTime);
+                this.master.gain.exponentialRampToValueAtTime(1, ctx.currentTime + 2.5);
+                this.master.connect(ctx.destination);
+                if (!this.noise) this.noise = this.makeNoise();
+                this.wind();
+                this.loop(() => this.bird(), 700, [1800, 5000]);
+                this.loop(() => this.insects(), 300, [900, 1700]);
+                this.loop(() => this.frog(), 3500, [6000, 12000]);
+                this.loop(() => this.cicada(), 2500, [14000, 24000]);
+                hideSoundHint();
+            }
+            stop() {
+                if (!this.running) return;
+                this.running = false;
+                this.timers.forEach(clearTimeout);
+                this.timers = [];
+                const ctx = this.ctx, m = this.master, srcs = this.srcs;
+                this.srcs = [];
+                m.gain.cancelScheduledValues(ctx.currentTime);
+                m.gain.setValueAtTime(m.gain.value, ctx.currentTime);
+                m.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.6);
+                setTimeout(() => { srcs.forEach(s => { try { s.stop(); } catch (e) {} }); m.disconnect(); }, 800);
+            }
+            loop(fn, first, [min, max]) {
+                const run = () => {
+                    if (!this.running) return;
+                    try { fn(); } catch (e) {}
+                    this.timers.push(setTimeout(run, min + Math.random() * (max - min)));
+                    if (this.timers.length > 50) this.timers = this.timers.slice(-20);
+                };
+                this.timers.push(setTimeout(run, first));
+            }
+            makeNoise() {
+                const ctx = this.ctx;
+                const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+                const d = b.getChannelData(0);
+                for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+                return b;
+            }
+            noiseSrc() { const s = this.ctx.createBufferSource(); s.buffer = this.noise; s.loop = true; return s; }
+            out(pan) {
+                if (this.ctx.createStereoPanner) {
+                    const p = this.ctx.createStereoPanner();
+                    p.pan.value = pan; p.connect(this.master);
+                    return p;
+                }
+                return this.master;
+            }
+            note(t, f1, f2, dur, vol, dest, type = 'sine') {
+                const ctx = this.ctx;
+                const o = ctx.createOscillator(), g = ctx.createGain();
+                o.type = type;
+                o.frequency.setValueAtTime(f1, t);
+                o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.02, dur * 0.3));
+                g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+                o.connect(g); g.connect(dest);
+                o.start(t); o.stop(t + dur + 0.05);
+            }
+            wind() {
+                const ctx = this.ctx;
+                const layer = (type, freq, q, vol, lfoRate, lfoDepth) => {
+                    const s = this.noiseSrc();
+                    const flt = ctx.createBiquadFilter();
+                    flt.type = type; flt.frequency.value = freq; flt.Q.value = q;
+                    const g = ctx.createGain(); g.gain.value = vol;
+                    const lfo = ctx.createOscillator(); lfo.frequency.value = lfoRate;
+                    const lg = ctx.createGain(); lg.gain.value = lfoDepth;
+                    lfo.connect(lg); lg.connect(g.gain);
+                    s.connect(flt); flt.connect(g); g.connect(this.master);
+                    s.start(); lfo.start();
+                    this.srcs.push(s, lfo);
+                };
+                layer('bandpass', 500, 0.6, 0.03, 0.1, 0.022);
+                layer('highpass', 3000, 0.7, 0.006, 0.23, 0.005);
+            }
+            bird() {
+                const t = this.ctx.currentTime + 0.05, dest = this.out(Math.random() * 1.6 - 0.8);
+                const kind = Math.floor(Math.random() * 4);
+                if (kind === 0) {
+                    const n = 3 + Math.floor(Math.random() * 4), base = 2600 + Math.random() * 1200;
+                    for (let i = 0; i < n; i++) this.note(t + i * 0.11, base, base * 1.35, 0.08, 0.045, dest);
+                } else if (kind === 1) {
+                    this.note(t, 1500, 2300, 0.22, 0.05, dest);
+                    this.note(t + 0.28, 2300, 1400, 0.32, 0.05, dest);
+                } else if (kind === 2) {
+                    for (let i = 0; i < 12; i++) this.note(t + i * 0.045, i % 2 ? 3600 : 3200, i % 2 ? 3400 : 3500, 0.04, 0.025, dest);
+                } else {
+                    for (let i = 0; i < 4; i++) this.note(t + i * 0.18, 2200 - i * 220, 1700 - i * 200, 0.14, 0.04, dest, 'triangle');
+                }
+            }
+            insects() {
+                const t = this.ctx.currentTime + 0.02, dest = this.out(Math.random() * 0.6 - 0.3);
+                const f = 4400 + Math.random() * 500;
+                for (let i = 0; i < 3; i++) this.note(t + i * 0.06, f, f, 0.035, 0.01, dest);
+            }
+            frog() {
+                const ctx = this.ctx, t = ctx.currentTime + 0.05;
+                const lp = ctx.createBiquadFilter();
+                lp.type = 'lowpass'; lp.frequency.value = 800;
+                lp.connect(this.out(Math.random() * 1.4 - 0.7));
+                const n = 2 + Math.floor(Math.random() * 2);
+                for (let i = 0; i < n; i++) this.note(t + i * 0.16, 190, 140, 0.09, 0.05, lp, 'sawtooth');
+            }
+            cicada() {
+                const ctx = this.ctx, t = ctx.currentTime;
+                const s = this.noiseSrc();
+                const bp = ctx.createBiquadFilter();
+                bp.type = 'bandpass'; bp.frequency.value = 5200; bp.Q.value = 10;
+                const g = ctx.createGain();
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(0.15, t + 1.5);
+                g.gain.setValueAtTime(0.15, t + 3);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + 4.5);
+                const trem = ctx.createGain(); trem.gain.value = 0.5;
+                const am = ctx.createOscillator(); am.frequency.value = 45;
+                const amg = ctx.createGain(); amg.gain.value = 0.5;
+                am.connect(amg); amg.connect(trem.gain);
+                s.connect(bp); bp.connect(g); g.connect(trem); trem.connect(this.out(Math.random() * 1.2 - 0.6));
+                s.start(t); am.start(t);
+                s.stop(t + 4.6); am.stop(t + 4.6);
+            }
+        }
+        const ambience = new JungleAmbience(soundFX);
+
+        let currentRoundIdx = 0;
+        let firstCard = null, secondCard = null;
+        let lockBoard = false, busy = false;
+        let matchedPairs = 0, moves = 0;
+        let timerSeconds = 0, timerInterval = null, isTimerRunning = false, timerPaused = false;
+        let currentImage = '';
+        let roundToken = 0;
+        let gameOver = false;
+        const results = []; // keputusan setiap pusingan untuk galeri akhir
+
+        const $ = id => document.getElementById(id);
+        const stage = $('stage');
+        const questionsGrid = $('questions-grid'), answersGrid = $('answers-grid');
+        const roundIndicator = $('round-indicator'), movesCounter = $('moves-counter'), timerDisplay = $('timer-display');
+        const landmarkTitle = $('landmark-title'), landmarkEmoji = $('landmark-emoji'), targetSifirBadge = $('target-sifir-badge');
+        const miniProgress = $('mini-progress'), journeyEl = $('journey');
+        const soundBtn = $('sound-btn'), forestBtn = $('forest-btn'), restartBtn = $('restart-btn');
+        const boardOverlay = $('board-overlay'), boardWrap = $('board-wrap'), boardSvg = $('board-svg');
+        const boardTitle = $('board-title'), boardCount = $('board-count'), boardInfo = $('board-info');
+        const toastBox = $('toast-box'), soundHint = $('sound-hint');
+        const victoryModal = $('victory-modal'), modalPanel = $('modal-panel'), nextRoundBtn = $('next-round-btn');
+        const playHint = $('play-hint'), previewBar = $('preview-bar'), previewFill = $('preview-fill'), previewSec = $('preview-sec');
+
+        const wait = ms => new Promise(r => setTimeout(r, ms));
+        const rand = (a, b) => a + Math.random() * (b - a);
+
+        const DARK_GREENS = ['#14532d', '#166534', '#15803d', '#3f6212', '#4d7c0f', '#1a4d2e', '#365314'];
+        const LIGHT_GREENS = ['#4d7c0f', '#65a30d', '#84cc16'];
+
+        function leafSVG(w, color, vein = 'rgba(236,252,203,.45)') {
+            const h = w * 0.4;
+            return `<svg width="${w}" height="${h}" viewBox="0 0 100 40">
+                <path d="M0,20 C22,-4 70,-6 100,20 C70,46 22,44 0,20Z" fill="${color}"/>
+                <path d="M0,20 Q50,17 100,20" stroke="${vein}" stroke-width="1.2" fill="none"/>
+                <path d="M25,19 L36,8 M45,18 L57,6 M65,19 L76,9 M25,21 L36,32 M45,22 L57,34 M65,21 L76,31" stroke="${vein}" stroke-width=".8" fill="none" opacity=".8"/>
+            </svg>`;
+        }
+        function addLeaf(parent, x, y, angle, w, color, swayDur) {
+            const h = w * 0.4;
+            const el = document.createElement('div');
+            el.className = 'leaf';
+            el.style.left = x;
+            el.style.top = `calc(${y} - ${h / 2}px)`;
+            el.style.transform = `rotate(${angle}deg)`;
+            el.innerHTML = `<div class="sway" style="animation-duration:${swayDur}s;animation-delay:${-rand(0, swayDur)}s">${leafSVG(w, color)}</div>`;
+            parent.appendChild(el);
+        }
+        function vineSVG(L) {
+            let leaves = '';
+            for (let y = 18, k = 0; y < L - 5; y += 18, k++) {
+                const ang = k % 2 ? 25 : 155;
+                leaves += `<path d="M0,0 C4,-5 12,-5 18,0 C12,5 4,5 0,0Z" fill="${LIGHT_GREENS[k % 3]}" transform="translate(15,${y}) rotate(${ang})"/>`;
+            }
+            return `<svg width="30" height="${L + 10}" viewBox="0 0 30 ${L + 10}">
+                <path d="M15,0 Q8,${L * 0.25} 15,${L * 0.5} T15,${L}" stroke="#3f6212" stroke-width="3" fill="none" stroke-linecap="round"/>${leaves}</svg>`;
+        }
+        function buildJungle() {
+            const j = $('jungle');
+            j.innerHTML = '<div class="rays"></div><div class="trunk left"></div><div class="trunk right"></div><div class="mist"></div>';
+            const vineCount = window.innerWidth < 640 ? 4 : 8;
+            for (let i = 0; i < vineCount; i++) {
+                const v = document.createElement('div');
+                v.className = 'vine';
+                v.style.left = (5 + (i + 0.5) * (90 / vineCount) + rand(-3, 3)) + '%';
+                v.style.animationDuration = rand(3, 6) + 's';
+                v.style.animationDelay = -rand(0, 6) + 's';
+                v.innerHTML = vineSVG(rand(60, window.innerWidth < 640 ? 120 : 220));
+                j.appendChild(v);
+            }
+            const maxW = Math.min(300, window.innerWidth * 0.35);
+            for (let i = 0; i < 9; i++) {
+                addLeaf(j, (i * 12 + rand(-3, 3)) + '%', '0px', rand(55, 125), rand(0.35, 0.6) * maxW, DARK_GREENS[i % DARK_GREENS.length], rand(3, 6));
+            }
+            const corners = [
+                { x: '0px', y: '0px', a: [8, 28, 48, 70, 88] },
+                { x: '100%', y: '0px', a: [92, 112, 132, 152, 172] },
+                { x: '0px', y: '100vh', a: [-8, -28, -48, -70, -88] },
+                { x: '100%', y: '100vh', a: [-92, -112, -132, -152, -172] }
+            ];
+            corners.forEach(c => c.a.forEach((a, k) => {
+                addLeaf(j, c.x, c.y, a + rand(-5, 5), rand(0.55, 1) * maxW, DARK_GREENS[(k * 3 + 1) % DARK_GREENS.length], rand(3, 7));
+            }));
+            for (let i = 0; i < 9; i++) {
+                const fl = document.createElement('div');
+                fl.className = 'fall';
+                fl.style.left = rand(5, 95) + '%';
+                fl.style.animationDuration = rand(11, 22) + 's';
+                fl.style.animationDelay = -rand(0, 22) + 's';
+                const col = ['#a3e635', '#84cc16', '#ca8a04', '#65a30d'][i % 4];
+                fl.innerHTML = `<div style="animation-duration:${rand(1.5, 3)}s">${leafSVG(rand(22, 38), col, 'rgba(26,46,5,.4)')}</div>`;
+                j.appendChild(fl);
+            }
+            for (let i = 0; i < 18; i++) {
+                const ff = document.createElement('div');
+                ff.className = 'firefly';
+                ff.style.left = rand(3, 97) + '%';
+                ff.style.top = rand(10, 95) + '%';
+                ff.style.setProperty('--dx', rand(-90, 90) + 'px');
+                ff.style.setProperty('--dy', rand(-90, 90) + 'px');
+                ff.style.animationDuration = `${rand(6, 12)}s, ${rand(1.8, 3.5)}s`;
+                ff.style.animationDelay = `${-rand(0, 10)}s, ${-rand(0, 3)}s`;
+                j.appendChild(ff);
+            }
+        }
+        function addCornerLeaves(el) {
+            const specs = [
+                { x: '-6px', y: '-6px', a: -150, w: 70, c: '#4d7c0f' },
+                { x: '-6px', y: '-6px', a: -115, w: 58, c: '#65a30d' },
+                { x: 'calc(100% + 6px)', y: 'calc(100% + 6px)', a: 30, w: 70, c: '#4d7c0f' },
+                { x: 'calc(100% + 6px)', y: 'calc(100% + 6px)', a: 65, w: 58, c: '#65a30d' }
+            ];
+            specs.forEach(s => {
+                const d = document.createElement('div');
+                d.className = 'corner-leaf';
+                d.style.left = s.x;
+                d.style.top = `calc(${s.y} - ${s.w * 0.2}px)`;
+                d.style.transform = `rotate(${s.a}deg)`;
+                d.innerHTML = leafSVG(s.w, s.c);
+                el.appendChild(d);
+            });
+        }
+        buildJungle();
+        addCornerLeaves($('board-card'));
+        addCornerLeaves(modalPanel);
+        let resizeT;
+        window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(buildJungle, 300); });
+
+        const imageCache = {}, imagePromises = {};
+        function fallbackImage(lm) {
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+                <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="${lm.colors[0]}"/><stop offset="1" stop-color="${lm.colors[1]}"/></linearGradient></defs>
+                <rect width="800" height="600" fill="url(#g)"/>
+                <circle cx="650" cy="120" r="70" fill="#fef3c7" opacity=".9"/>
+                <text x="400" y="370" font-size="260" text-anchor="middle">${lm.emoji}</text>
+                <text x="400" y="530" font-size="56" font-family="sans-serif" font-weight="bold" fill="#fff" text-anchor="middle">${lm.name}</text></svg>`;
+            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        }
+        function loadLandmarkImage(lm) {
+            if (imagePromises[lm.id]) return imagePromises[lm.id];
+            imagePromises[lm.id] = new Promise(resolve => {
+                const img = new Image();
+                let settled = false;
+                const finish = url => { if (settled) return; settled = true; imageCache[lm.id] = url; resolve(url); };
+                img.onload = () => finish(lm.imageUrl);
+                img.onerror = () => finish(fallbackImage(lm));
+                setTimeout(() => finish(fallbackImage(lm)), 10000);
+                img.src = lm.imageUrl;
+            });
+            return imagePromises[lm.id];
+        }
+
+        const SVGNS = 'http://www.w3.org/2000/svg';
+        const BOARD_W = 400, BOARD_H = 300, COLS = 3, ROWS = 2;
+        const CW = BOARD_W / COLS, CH = BOARD_H / ROWS;
+        const S = Math.min(CW, CH);
+        const M = S * 0.32;
+        const PAD = 6;
+        let vEdges = [], hEdges = [];
+        const randSign = () => (Math.random() < 0.5 ? 1 : -1);
+        function generateEdges() {
+            vEdges = Array.from({ length: ROWS }, () => Array.from({ length: COLS - 1 }, randSign));
+            hEdges = Array.from({ length: ROWS - 1 }, () => Array.from({ length: COLS }, randSign));
+        }
+        const f = n => +n.toFixed(2);
+        function edge(x1, y1, x2, y2, sign) {
+            if (!sign) return `L${f(x2)},${f(y2)}`;
+            const L = Math.hypot(x2 - x1, y2 - y1);
+            const ux = (x2 - x1) / L, uy = (y2 - y1) / L;
+            const nx = uy, ny = -ux;
+            const P = (t, h) => {
+                const a = L / 2 + (t - 0.5) * S, b = h * S * sign;
+                return `${f(x1 + ux * a + nx * b)},${f(y1 + uy * a + ny * b)}`;
+            };
+            return `L${P(0.35, 0)} C${P(0.40, 0)} ${P(0.42, 0.05)} ${P(0.38, 0.10)} ` +
+                   `C${P(0.32, 0.18)} ${P(0.40, 0.28)} ${P(0.50, 0.28)} ` +
+                   `C${P(0.60, 0.28)} ${P(0.68, 0.18)} ${P(0.62, 0.10)} ` +
+                   `C${P(0.58, 0.05)} ${P(0.60, 0)} ${P(0.65, 0)} L${f(x2)},${f(y2)}`;
+        }
+        function piecePath(i) {
+            const c = i % COLS, r = Math.floor(i / COLS);
+            const x0 = c * CW, y0 = r * CH, x1 = x0 + CW, y1 = y0 + CH;
+            const top = r === 0 ? 0 : -hEdges[r - 1][c];
+            const right = c === COLS - 1 ? 0 : vEdges[r][c];
+            const bottom = r === ROWS - 1 ? 0 : hEdges[r][c];
+            const left = c === 0 ? 0 : -vEdges[r][c - 1];
+            return `M${f(x0)},${f(y0)} ${edge(x0, y0, x1, y0, top)} ${edge(x1, y0, x1, y1, right)} ${edge(x1, y1, x0, y1, bottom)} ${edge(x0, y1, x0, y0, left)} Z`;
+        }
+
+        function imgTag(cls, extra = '') {
+            return `<image class="board-img ${cls}" href="${currentImage}" x="0" y="0" width="${BOARD_W}" height="${BOARD_H}" preserveAspectRatio="xMidYMid slice" ${extra}/>`;
+        }
+        function buildBoard() {
+            let defs = '', slots = '';
+            for (let i = 0; i < COLS * ROWS; i++) {
+                const d = piecePath(i), c = i % COLS, r = Math.floor(i / COLS);
+                defs += `<clipPath id="bclip-${i}"><path d="${d}"/></clipPath>`;
+                slots += `<path id="slot-${i}" class="slot-ghost" d="${d}"/>` +
+                         `<text id="slotnum-${i}" class="slot-num" x="${f(c * CW + CW / 2)}" y="${f(r * CH + CH / 2)}">${i + 1}</text>`;
+            }
+            boardSvg.setAttribute('viewBox', `${-PAD} ${-PAD} ${BOARD_W + PAD * 2} ${BOARD_H + PAD * 2}`);
+            boardSvg.innerHTML = `
+                <defs>${defs}<clipPath id="bclip-all"><rect x="0" y="0" width="${BOARD_W}" height="${BOARD_H}" rx="10"/></clipPath></defs>
+                <rect x="${-PAD}" y="${-PAD}" width="${BOARD_W + PAD * 2}" height="${BOARD_H + PAD * 2}" rx="16" fill="#0d2a12" stroke="#2b1607" stroke-width="3"/>
+                ${imgTag('ghost-img', 'opacity=".14" style="filter:grayscale(1)" clip-path="url(#bclip-all)"')}
+                <g id="slot-layer">${slots}</g>
+                <g id="filled-layer"></g>
+                ${imgTag('full-img', 'clip-path="url(#bclip-all)"')}`;
+        }
+        function placePiece(i) {
+            const g = document.createElementNS(SVGNS, 'g');
+            g.setAttribute('class', 'placed-piece snap');
+            g.innerHTML = `<g clip-path="url(#bclip-${i})">${imgTag('')}</g><path class="piece-outline" d="${piecePath(i)}"/>`;
+            boardSvg.querySelector('#filled-layer').appendChild(g);
+            const n = boardSvg.querySelector('#slotnum-' + i);
+            if (n) n.style.opacity = 0;
+        }
+        function highlightSlot(i, on) {
+            const s = boardSvg.querySelector('#slot-' + i);
+            if (s) s.classList.toggle('target', on);
+        }
+        function updateBoardHead() {
+            const lm = LANDMARKS[currentRoundIdx];
+            boardTitle.innerHTML = `${ic('puzzle')} Teroka ${lm.name}`;
+            boardCount.textContent = `${matchedPairs} / 6`;
+        }
+        function showBoard() { boardOverlay.classList.add('show'); }
+        function hideBoard() { boardOverlay.classList.remove('show'); }
+
+        function renderJourney() {
+            journeyEl.innerHTML = LANDMARKS.map((lm, i) => {
+                const cls = i < currentRoundIdx ? 'done' : (i === currentRoundIdx ? 'current' : '');
+                return `<div class="journey-step ${cls}" title="${lm.name}">${lm.emoji}</div>`;
+            }).join('<div class="journey-line"></div>');
+        }
+        function buildMiniProgress() {
+            miniProgress.innerHTML = Array.from({ length: 6 }, (_, i) => `<span id="mini-${i}" class="mini-piece">${ic('puzzle')}</span>`).join('');
+        }
+        function updateProgress() {
+            for (let i = 0; i < 6; i++) $('mini-' + i).classList.toggle('got', i < matchedPairs);
+            boardCount.textContent = `${matchedPairs} / 6`;
+        }
+        function showToast(text, type) {
+            const t = document.createElement('div');
+            t.className = 'toast ' + type;
+            t.textContent = text;
+            toastBox.innerHTML = '';
+            toastBox.appendChild(t);
+            setTimeout(() => t.remove(), 1350);
+        }
+        function burstAt(x, y, big = false) {
+            const ring = document.createElement('div');
+            ring.className = 'ring-burst';
+            ring.style.left = x + 'px'; ring.style.top = y + 'px';
+            const dot = document.createElement('div');
+            dot.className = 'flash-dot';
+            dot.style.left = x + 'px'; dot.style.top = y + 'px';
+            document.body.append(ring, dot);
+            setTimeout(() => { ring.remove(); dot.remove(); }, 750);
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: big ? 60 : 35, spread: 360, startVelocity: big ? 28 : 20,
+                    gravity: 0.7, ticks: 90, scalar: 0.9, shapes: ['star', 'circle'],
+                    colors: CONFETTI_COLORS,
+                    origin: { x: x / window.innerWidth, y: y / window.innerHeight }
+                });
+            }
+        }
+        function hideSoundHint() {
+            soundHint.style.opacity = '0';
+            setTimeout(() => soundHint.style.display = 'none', 500);
+        }
+
+        function generateTriviaPairs(round) {
+            const allTrivia = round.trivia;
+            // Shuffle the trivia pool and select 6 random pairs
+            const selected = shuffle([...allTrivia]).slice(0, 6);
+            return selected.map((item, index) => ({
+                pairId: index,
+                question: item.q,
+                answer: item.a
+            }));
+        }
+        
+        function shuffle(a) {
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function showBanner(lm, idx) {
+            $('banner-round').textContent = idx + 1;
+            $('banner-emoji').textContent = lm.emoji;
+            $('banner-name').textContent = lm.name;
+            $('banner-sifir').textContent = lm.sifirTitle;
+            const banner = $('round-banner');
+            banner.classList.add('show');
+            const a = $('banner-move').animate([
+                { transform: 'translateY(-110vh) rotate(-10deg)' },
+                { offset: 0.2, transform: 'translateY(24px) rotate(4deg)' },
+                { offset: 0.28, transform: 'translateY(-8px) rotate(-2deg)' },
+                { offset: 0.34, transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                { offset: 0.82, transform: 'translateY(0) scale(1)', opacity: 1 },
+                { transform: 'translateY(-30px) scale(.5)', opacity: 0 }
+            ], { duration: 2300, easing: 'ease-out', fill: 'forwards' });
+            setTimeout(() => soundFX.thud(), 440);
+            const close = () => { banner.classList.remove('show'); a.cancel(); };
+            return Promise.race([a.finished, wait(2600)]).then(close, close);
+        }
+
+        async function countdown(ms) {
+            previewFill.style.width = '100%';
+            const anim = previewFill.animate([{ width: '100%' }, { width: '0%' }], { duration: ms, easing: 'linear', fill: 'forwards' });
+            const secs = Math.round(ms / 1000);
+            for (let s = secs; s > 0; s--) {
+                previewSec.textContent = s;
+                soundFX.tick(0);
+                await wait(1000);
+            }
+            await anim.finished;
+            previewSec.textContent = '0';
+        }
+
+        async function playIntro(lm, idx, token) {
+            busy = true;
+
+            const iris = $('iris');
+            iris.classList.add('show');
+            setTimeout(() => iris.classList.remove('show'), 2200);
+            const irisAnim = $('iris-hole').animate([
+                { width: '0px', height: '0px' },
+                { offset: 0.2, width: '0px', height: '0px' },
+                { offset: 0.45, width: '120px', height: '120px' },
+                { offset: 0.6, width: '110px', height: '110px' },
+                { width: '300vmax', height: '300vmax' }
+            ], { duration: 1600, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
+
+            stage.animate([
+                { transform: 'perspective(1200px) translateY(28vh) scale(.28) rotateX(38deg)', filter: 'blur(6px)', opacity: 0.3 },
+                { offset: 0.45, transform: 'perspective(1200px) translateY(10vh) scale(.5) rotateX(22deg)', filter: 'blur(3px)', opacity: 0.8 },
+                { offset: 0.8, transform: 'perspective(1200px) translateY(0) scale(1.05) rotateX(0deg)', filter: 'blur(0px)', opacity: 1 },
+                { transform: 'none', filter: 'none', opacity: 1 }
+            ], { duration: 2000, easing: 'cubic-bezier(.33,1,.68,1)' });
+
+            $('jungle').animate([
+                { transform: 'scale(1.9)' },
+                { offset: 0.8, transform: 'scale(.97)' },
+                { transform: 'scale(1)' }
+            ], { duration: 2200, easing: 'cubic-bezier(.33,1,.68,1)' });
+
+            soundFX.zoom();
+            await wait(800);
+            const bannerDone = showBanner(lm, idx);
+            await Promise.race([irisAnim.finished, wait(1800)]).catch(() => {});
+            iris.classList.remove('show');
+            irisAnim.cancel();
+            await bannerDone;
+            if (token !== roundToken) return;
+
+            const cards = [...document.querySelectorAll('.card')];
+            cards.forEach((c, i) => { c.classList.add('dealt'); soundFX.tick(parseInt(c.style.animationDelay) || 0); });
+            await wait(420 + 5 * 70 + 600);
+            if (token !== roundToken) return;
+
+            playHint.classList.add('hidden');
+            previewBar.classList.remove('hidden');
+            cards.forEach((c, i) => setTimeout(() => c.classList.add('flipped'), i * 45));
+            soundFX.reveal();
+            await wait(cards.length * 45 + 550);
+            if (token !== roundToken) return;
+            await countdown(3000); // 3 seconds preview for trivia
+            if (token !== roundToken) return;
+
+            cards.forEach((c, i) => setTimeout(() => { c.classList.remove('flipped'); soundFX.flip(); }, i * 45));
+            await wait(cards.length * 45 + 650);
+            if (token !== roundToken) return;
+
+            previewBar.classList.add('hidden');
+            playHint.classList.remove('hidden');
+            showToast('Mula! 🌿', 'good');
+            busy = false;
+        }
+
+        function initRound(idx) {
+            const token = ++roundToken;
+            currentRoundIdx = idx;
+            const lm = LANDMARKS[idx];
+
+            roundIndicator.textContent = `${idx + 1} / ${LANDMARKS.length}`;
+            targetSifirBadge.textContent = lm.sifirTitle;
+            landmarkTitle.textContent = lm.name;
+            landmarkEmoji.textContent = lm.emoji;
+
+            matchedPairs = 0; moves = 0; busy = true;
+            movesCounter.textContent = '0';
+            resetTimer();
+            renderJourney();
+            buildMiniProgress();
+
+            currentImage = imageCache[lm.id] || lm.imageUrl;
+            generateEdges();
+            buildBoard();
+            boardWrap.classList.remove('complete');
+            boardInfo.classList.add('hidden');
+            updateBoardHead();
+            hideBoard();
+            updateProgress();
+            previewBar.classList.add('hidden');
+            playHint.classList.remove('hidden');
+
+            loadLandmarkImage(lm).then(url => {
+                if (currentRoundIdx !== idx || url === currentImage) return;
+                currentImage = url;
+                boardSvg.querySelectorAll('.board-img').forEach(im => im.setAttribute('href', url));
+            });
+            if (LANDMARKS[idx + 1]) loadLandmarkImage(LANDMARKS[idx + 1]);
+
+            // Call to new Trivia generation logic
+            const pairs = generateTriviaPairs(lm);
+            const qCards = shuffle(pairs.map(p => ({ pairId: p.pairId, type: 'Q', text: p.question })));
+            const aCards = shuffle(pairs.map(p => ({ pairId: p.pairId, type: 'A', text: p.answer })));
+
+            questionsGrid.innerHTML = '';
+            answersGrid.innerHTML = '';
+            firstCard = null; secondCard = null; lockBoard = false;
+            qCards.forEach((c, i) => questionsGrid.appendChild(createCardElement(c, i, true)));
+            aCards.forEach((c, i) => answersGrid.appendChild(createCardElement(c, i, false)));
+
+            playIntro(lm, idx, token);
+        }
+
+        function createCardElement(card, index, isQ) {
+            const el = document.createElement('div');
+            el.className = `card ${isQ ? 'q-card' : 'a-card'} h-24 sm:h-28 md:h-32`;
+            el.dataset.type = card.type;
+            el.style.animationDelay = (index * 70 + (isQ ? 0 : 420)) + 'ms';
+            
+            // Adjusted font sizes for potentially longer trivia texts
+            const textClass = isQ ? 'text-xs sm:text-sm md:text-base leading-tight px-1' : 'text-sm sm:text-base md:text-lg leading-tight px-1';
+            
+            el.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-face card-back ${isQ ? 'back-q' : 'back-a'}">
+                        <span class="face-icon">${ic(isQ ? 'question' : 'leaf')}</span>
+                        <span class="text-[9px] sm:text-[10px] font-extrabold tracking-widest uppercase mt-1">${isQ ? 'Soalan' : 'Fakta'}</span>
+                    </div>
+                    <div class="card-face card-front ${isQ ? 'front-q' : 'front-a'}">
+                        <span class="text-[9px] font-extrabold uppercase opacity-60 mb-1">${isQ ? 'Soalan' : 'Fakta'}</span>
+                        <span class="${textClass} font-bold font-heading">${card.text}</span>
+                    </div>
+                </div>`;
+            el.addEventListener('click', () => handleCardClick(el, card));
+            return el;
+        }
+
+        function handleCardClick(el, card) {
+            if (lockBoard || busy) return;
+            if (el.classList.contains('flipped') || el.classList.contains('matched-done')) return;
+            if (!isTimerRunning) startTimer();
+
+            soundFX.flip();
+            el.classList.add('flipped', 'selected');
+
+            if (!firstCard) { firstCard = { element: el, data: card }; return; }
+
+            if (firstCard.data.type === card.type) {
+                firstCard.element.classList.remove('flipped', 'selected');
+                firstCard = { element: el, data: card };
+                return;
+            }
+
+            secondCard = { element: el, data: card };
+            lockBoard = true;
+            moves++;
+            movesCounter.textContent = moves;
+
+            if (firstCard.data.pairId === secondCard.data.pairId) handleMatch();
+            else handleMismatch();
+        }
+
+        function handleMismatch() {
+            const a = firstCard.element, b = secondCard.element;
+            setTimeout(() => {
+                soundFX.wrong();
+                a.classList.add('card-shake'); b.classList.add('card-shake');
+                showToast('Cuba lagi! 💪', 'bad');
+            }, 450);
+            setTimeout(() => {
+                a.classList.remove('flipped', 'card-shake', 'selected');
+                b.classList.remove('flipped', 'card-shake', 'selected');
+                resetBoardState();
+            }, 1400);
+        }
+
+        function animateMerge(elA, elB) {
+            return new Promise(resolve => {
+                const rA = elA.getBoundingClientRect(), rB = elB.getBoundingClientRect();
+                const cx = (rA.left + rA.width / 2 + rB.left + rB.width / 2) / 2;
+                const cy = (rA.top + rA.height / 2 + rB.top + rB.height / 2) / 2;
+                soundFX.spin();
+                let done = 0;
+                [[elA, rA, 1], [elB, rB, -1]].forEach(([el, r, dir]) => {
+                    const isQ = el.dataset.type === 'Q';
+                    const clone = document.createElement('div');
+                    clone.className = 'merge-clone ' + (isQ ? 'q-shape front-q' : 'a-shape front-a');
+                    clone.innerHTML = el.querySelector('.card-front').innerHTML;
+                    Object.assign(clone.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+                    document.body.appendChild(clone);
+                    el.style.visibility = 'hidden';
+                    const dx = cx - (r.left + r.width / 2), dy = cy - (r.top + r.height / 2);
+                    const anim = clone.animate([
+                        { transform: 'perspective(700px) translate(0,0) rotateY(0deg) rotate(0deg) scale(1)', opacity: 1 },
+                        { offset: 0.35, transform: `perspective(700px) translate(0px,-20px) rotateY(${360 * dir}deg) rotate(0deg) scale(1.1)`, opacity: 1 },
+                        { transform: `perspective(700px) translate(${dx}px,${dy}px) rotateY(${1080 * dir}deg) rotate(${40 * dir}deg) scale(.3)`, opacity: 0.2 }
+                    ], { duration: 1000, easing: 'cubic-bezier(.55,0,.35,1)', fill: 'forwards' });
+                    anim.onfinish = () => {
+                        clone.remove();
+                        if (++done === 2) { burstAt(cx, cy); resolve({ x: cx, y: cy }); }
+                    };
+                });
+            });
+        }
+
+        let clipUid = 0;
+        function createFlyingPiece(i, scale) {
+            const c = i % COLS, r = Math.floor(i / COLS);
+            const vx = c * CW - M, vy = r * CH - M, vw = CW + 2 * M, vh = CH + 2 * M;
+            const id = 'fclip-' + (++clipUid);
+            const d = piecePath(i);
+            const div = document.createElement('div');
+            div.className = 'flying-piece';
+            div.innerHTML = `
+                <svg viewBox="${f(vx)} ${f(vy)} ${f(vw)} ${f(vh)}" xmlns="${SVGNS}">
+                    <defs><clipPath id="${id}"><path d="${d}"/></clipPath></defs>
+                    <g clip-path="url(#${id})">
+                        <image href="${currentImage}" x="0" y="0" width="${BOARD_W}" height="${BOARD_H}" preserveAspectRatio="xMidYMid slice"/>
+                    </g>
+                    <path d="${d}" fill="none" stroke="#fde047" stroke-width="3"/>
+                </svg>`;
+            const w = vw * scale, h = vh * scale;
+            div.style.width = w + 'px';
+            div.style.height = h + 'px';
+            return { div, w, h, offX: (vx + PAD) * scale, offY: (vy + PAD) * scale };
+        }
+
+        function markCardDone(el) {
+            el.style.visibility = '';
+            el.classList.remove('selected');
+            el.classList.add('matched-done');
+            const badge = document.createElement('div');
+            badge.className = 'done-badge';
+            badge.innerHTML = ic('check');
+            el.appendChild(badge);
+        }
+
+        async function handleMatch() {
+            busy = true;
+            timerPaused = true;
+            const a = firstCard, b = secondCard;
+            const pairId = a.data.pairId;
+
+            soundFX.match();
+            showToast(PRAISE[Math.floor(Math.random() * PRAISE.length)], 'good');
+            await wait(500);
+
+            const center = await animateMerge(a.element, b.element);
+            markCardDone(a.element);
+            markCardDone(b.element);
+
+            const scale = boardWrap.offsetWidth / (BOARD_W + PAD * 2);
+            const piece = createFlyingPiece(pairId, scale);
+            const startLeft = center.x - piece.w / 2, startTop = center.y - piece.h / 2;
+            piece.div.style.left = startLeft + 'px';
+            piece.div.style.top = startTop + 'px';
+            document.body.appendChild(piece.div);
+            soundFX.pop();
+            const popAnim = piece.div.animate([
+                { transform: 'scale(0) rotate(-180deg)', opacity: 0 },
+                { offset: 0.6, transform: 'scale(1.3) rotate(15deg)', opacity: 1 },
+                { transform: 'scale(1.1) rotate(0deg)', opacity: 1 }
+            ], { duration: 600, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'forwards' });
+            await popAnim.finished;
+            await wait(150);
+
+            updateBoardHead();
+            highlightSlot(pairId, true);
+            showBoard();
+            soundFX.whoosh();
+            await wait(520);
+
+            const wr = boardWrap.getBoundingClientRect();
+            const dx = wr.left + piece.offX - startLeft;
+            const dy = wr.top + piece.offY - startTop;
+            piece.div.style.transform = 'scale(1.1)';
+            popAnim.cancel();
+            const fly = piece.div.animate([
+                { transform: 'translate(0,0) scale(1.1) rotate(0deg)' },
+                { offset: 0.5, transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 90}px) scale(1.25) rotate(200deg)` },
+                { transform: `translate(${dx}px, ${dy}px) scale(1) rotate(360deg)` }
+            ], { duration: 850, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' });
+            await fly.finished;
+
+            piece.div.remove();
+            highlightSlot(pairId, false);
+            placePiece(pairId);
+            soundFX.snap();
+            const c = pairId % COLS, r = Math.floor(pairId / COLS);
+            burstAt(wr.left + (c * CW + CW / 2 + PAD) * scale, wr.top + (r * CH + CH / 2 + PAD) * scale);
+
+            matchedPairs++;
+            updateProgress();
+
+            if (matchedPairs === 6) {
+                await wait(600);
+                await revealComplete();
+                hideBoard();
+                await wait(350);
+                handleRoundVictory();
+            } else {
+                await wait(1000);
+                hideBoard();
+                await wait(350);
+                timerPaused = false;
+            }
+            resetBoardState();
+            busy = false;
+        }
+
+        async function revealComplete() {
+            const lm = LANDMARKS[currentRoundIdx];
+            stopTimer();
+            boardWrap.classList.add('complete');
+            boardTitle.innerHTML = `${ic('star')} ${lm.name} Siap!`;
+            boardInfo.textContent = lm.info;
+            boardInfo.classList.remove('hidden');
+            soundFX.victory();
+            const r = boardWrap.getBoundingClientRect();
+            burstAt(r.left + r.width / 2, r.top + r.height / 2, true);
+            if (typeof confetti === 'function') confetti({ particleCount: 120, spread: 90, origin: { y: 0.65 }, colors: CONFETTI_COLORS });
+            await wait(2600);
+        }
+
+        function resetBoardState() { firstCard = null; secondCard = null; lockBoard = false; }
+
+        function renderTime() {
+            const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const s = (timerSeconds % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${m}:${s}`;
+        }
+        function startTimer() {
+            isTimerRunning = true; timerPaused = false;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (timerPaused) return;
+                timerSeconds++;
+                renderTime();
+            }, 1000);
+        }
+        function stopTimer() { isTimerRunning = false; clearInterval(timerInterval); }
+        function resetTimer() { stopTimer(); timerSeconds = 0; timerPaused = false; renderTime(); }
+
+        function handleRoundVictory() {
+            stopTimer();
+            const lm = LANDMARKS[currentRoundIdx];
+            const isLast = currentRoundIdx === LANDMARKS.length - 1;
+
+            $('modal-moves').textContent = moves;
+            $('modal-time').textContent = timerDisplay.textContent;
+            $('modal-landmark-img').src = currentImage;
+            $('modal-info').textContent = lm.info;
+
+            const stars = moves <= 8 ? 3 : moves <= 12 ? 2 : 1;
+            results[currentRoundIdx] = { moves, seconds: timerSeconds, stars, image: currentImage };
+
+            if (isLast) { showFinale(); return; }
+
+            $('modal-stars').innerHTML = [0, 1, 2].map(i =>
+                `<span class="star ${i < stars ? 'on' : ''}" style="animation-delay:${300 + i * 200}ms">${ic('star')}</span>`).join('');
+            $('modal-title').textContent = 'Syabas! Pusingan Selesai!';
+            $('modal-subtitle').innerHTML = `Anda berjaya mencantumkan puzzle <span class="text-yellow-300">${lm.name}</span>!`;
+            nextRoundBtn.innerHTML = `<span>Stesen Seterusnya</span> ${ic('arrow')}`;
+
+            victoryModal.classList.remove('hidden');
+            setTimeout(() => {
+                victoryModal.classList.remove('opacity-0');
+                modalPanel.classList.remove('scale-90');
+                modalPanel.classList.add('scale-100');
+            }, 10);
+        }
+
+        nextRoundBtn.addEventListener('click', () => {
+            victoryModal.classList.add('opacity-0');
+            modalPanel.classList.remove('scale-100');
+            modalPanel.classList.add('scale-90');
+            setTimeout(() => {
+                victoryModal.classList.add('hidden');
+                initRound(currentRoundIdx + 1);
+            }, 300);
+        });
+
+        function fmtTime(sec) {
+            return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+        }
+        function showFinale() {
+            gameOver = true;
+            busy = true;
+            currentRoundIdx = LANDMARKS.length;
+            renderJourney();
+
+            const done = results.filter(Boolean);
+            $('fin-stars').textContent = `⭐ ${done.reduce((s, r) => s + r.stars, 0)} / ${LANDMARKS.length * 3}`;
+            $('fin-moves').textContent = done.reduce((s, r) => s + r.moves, 0);
+            $('fin-time').textContent = fmtTime(done.reduce((s, r) => s + r.seconds, 0));
+
+            const rots = [-5, 4, -3, 5, -4];
+            $('fin-gallery').innerHTML = LANDMARKS.map((lm, i) => {
+                const r = results[i] || { stars: 0, moves: '-', seconds: 0, image: imageCache[lm.id] || lm.imageUrl };
+                const starStr = [0, 1, 2].map(k => `<span class="${k < r.stars ? '' : 'off'}">★</span>`).join('');
+                return `
+                    <div class="photo" style="--rot:${rots[i % rots.length]}deg;animation-delay:${1.3 + i * 0.25}s">
+                        <img src="${r.image}" alt="${lm.name}">
+                        <div class="mt-2 font-heading font-bold text-[#422006] text-sm sm:text-base leading-tight">${lm.emoji} ${lm.name}</div>
+                        <div class="stars-mini">${starStr}</div>
+                        <div class="text-[10px] sm:text-[11px] font-bold text-[#78350f]/80">${lm.sifirTitle} · ${r.moves} cubaan · ${fmtTime(r.seconds)}</div>
+                    </div>`;
+            }).join('');
+
+            const fin = $('finale');
+            fin.scrollTop = 0;
+            fin.classList.add('show');
+
+            soundFX.victory();
+            setTimeout(() => soundFX.victory(), 1400);
+            LANDMARKS.forEach((_, i) => setTimeout(() => soundFX.snap(), 1500 + i * 250));
+            if (typeof confetti === 'function') {
+                const end = Date.now() + 4000;
+                (function frame() {
+                    confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0, y: 0.75 }, colors: CONFETTI_COLORS, zIndex: 95 });
+                    confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1, y: 0.75 }, colors: CONFETTI_COLORS, zIndex: 95 });
+                    if (Date.now() < end) requestAnimationFrame(frame);
+                })();
+                [600, 1600, 2600].forEach(t => setTimeout(() => confetti({
+                    particleCount: 90, spread: 100, startVelocity: 40, origin: { x: rand(0.25, 0.75), y: 0.35 },
+                    shapes: ['star', 'circle'], colors: CONFETTI_COLORS, zIndex: 95
+                }), t));
+            }
+        }
+
+        restartBtn.addEventListener('click', () => { if (!busy && !gameOver) initRound(currentRoundIdx); });
+
+        soundBtn.addEventListener('click', () => {
+            soundFX.enabled = !soundFX.enabled;
+            soundBtn.classList.toggle('off', !soundFX.enabled);
+            soundBtn.innerHTML = ic(soundFX.enabled ? 'volume' : 'mute');
+        });
+
+        forestBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ambience.on = !ambience.on;
+            forestBtn.classList.toggle('off', !ambience.on);
+            if (ambience.on) ambience.start(); else { ambience.stop(); hideSoundHint(); }
+        });
+
+        document.addEventListener('pointerdown', () => ambience.start(), { once: true });
+
+        // Init round
+        initRound(0);
+    </script>
+</body>
+</html>
